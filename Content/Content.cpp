@@ -4,6 +4,8 @@
 #include <QPair>
 
 QVector<QPair<Content::PlaceCommand, QString> > Content::vecPlaceCommand{
+    {   Content::PlaceCommand(Content::Place::MultiPlace, Content::NoCommand), {} },
+
     {   Content::PlaceCommand(Content::Place::ThyCloset, Content::ThyCloset_AddPrayerNeed), QObject::tr("🙏 Add prayer need") },
     {   Content::PlaceCommand(Content::Place::ThyCloset, Content::ThyCloset_AddAnswerOfGod), QObject::tr("✔️ Add answer of God") },
     {   Content::PlaceCommand(Content::Place::ThyCloset, Content::ThyCloset_ListPrayerNeed), QObject::tr("🗒 List of prayer needs") },

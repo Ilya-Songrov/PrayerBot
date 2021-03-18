@@ -14,6 +14,11 @@ void PlaceAbstract::slotOnCommand(const Message::Ptr &messagePtr, const Content:
     case Content::MultiPlace_Help:
         sendStartingButtons(messagePtr->chat->id);
         break;
+    case Content::MultiPlace_AnyMessage:
+        if (QString::fromStdString(messagePtr->text).toLower() == "ping") {
+            sendStartingMessage(messagePtr->chat->id, "Pong!");
+        }
+        break;
     default:
         static const auto answer { QObject::tr("Query is not correct").toStdString() };
         sendStartingMessage(messagePtr->chat->id, answer);
@@ -29,6 +34,11 @@ void PlaceAbstract::slotOnCallbackQuery(const CallbackQuery::Ptr &callbackQuery,
         break;
     case Content::MultiPlace_Help:
         sendStartingButtons(callbackQuery->message->chat->id);
+        break;
+    case Content::MultiPlace_AnyMessage:
+        if (QString::fromStdString(callbackQuery->message->text).toLower() == "ping") {
+            sendStartingMessage(callbackQuery->message->chat->id, "Pong!");
+        }
         break;
     default:
         static const auto answer { QObject::tr("Query is not correct").toStdString() };

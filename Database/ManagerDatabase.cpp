@@ -2,18 +2,15 @@
 
 ManagerDatabase::ManagerDatabase(const QString &pathDatabase, QObject *parent) : QObject(parent)
 {
-#ifdef QT_DEBUG
-//    QFile::remove(pathDatabase);
-//    qFatal("remove");
-#endif
+    const bool needCreateTables = !QFileInfo::exists(pathDatabase);
     db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName(pathDatabase);
-    if (!db.open()) {
-        qDebug() << "Database Not open" << pathDatabase << Qt::endl;
+    if (db.open() && needCreateTables) {
+        createDatabase();
     }
-#ifdef QT_DEBUG
-//    createDatabase();
-#endif
+    else if(!db.open()){
+        qWarning() << "Database Not open" << pathDatabase << Qt::endl;
+    }
 }
 
 ManagerDatabase::~ManagerDatabase()
@@ -31,20 +28,23 @@ bool ManagerDatabase::isOpen() const
 bool ManagerDatabase::addPrayerNeed(const QString &prayerNeed, const int64_t chat_id)
 {
     if (prayerNeed.isEmpty()){
-        qDebug() << "Add prayerNeed failed: prayerNeed cannot be empty" << Qt::endl;
+        qWarning() << "addPrayerNeed failed: prayerNeed cannot be empty" << Qt::endl;
         return false;
     }
     if (existsPrayerNeed(prayerNeed, chat_id)) {
         return true;
     }
+    if (!existsChatId(chat_id)) {
+        inserNewChat(chat_id);
+    }
     QSqlQuery query;
     query.prepare("INSERT INTO prayer_needs (need, chat_id) VALUES (:prayerNeed, :chat_id)");
-    query.bindValue(":chat_id", QVariant::fromValue(chat_id));
     query.bindValue(":prayerNeed", prayerNeed);
+    query.bindValue(":chat_id", varinatChatId(chat_id));
     if(query.exec()){
         return true;
     }
-    qDebug() << "Add prayerNeed failed: " << query.lastError() << Qt::endl;
+    qWarning() << "addPrayerNeed failed: " << query.lastError() << Qt::endl;
     return false;
 }
 
@@ -53,35 +53,36 @@ bool ManagerDatabase::addPrayerNeed(const std::string &prayerNeed, const int64_t
     return addPrayerNeed(QString::fromStdString(prayerNeed), chat_id);
 }
 
-bool ManagerDatabase::removePrayerNeed(const QString &prayerNeed, const int64_t chat_id)
+bool ManagerDatabase::deletePrayerNeed(const QString &prayerNeed, const int64_t chat_id)
 {
     if (prayerNeed.isEmpty()){
-        qDebug() << "Remove prayerNeed failed: prayerNeed cannot be empty" << Qt::endl;
+        qWarning() << "deletePrayerNeed failed: prayerNeed cannot be empty" << Qt::endl;
         return false;
     }
     if (!existsPrayerNeed(prayerNeed, chat_id)) {
         return false;
     }
-    qDebug() << "Remove" << prayerNeed << chat_id << Qt::endl;
     QSqlQuery query;
     query.prepare("DELETE FROM prayer_needs WHERE (need = :prayerNeed AND chat_id = :chat_id)");
-    query.bindValue(":chat_id", QVariant::fromValue(chat_id));
+    query.bindValue(":chat_id", varinatChatId(chat_id));
     query.bindValue(":prayerNeed", prayerNeed);
     if(query.exec()){
         return true;
     }
-    qDebug() << "Remove prayerNeed failed: " << query.lastError() << Qt::endl;
+    qWarning() << "deletePrayerNeed failed: " << query.lastError() << Qt::endl;
     return false;
 }
 
-bool ManagerDatabase::removePrayerNeed(const std::string &prayerNeed, const int64_t chat_id)
+bool ManagerDatabase::deletePrayerNeed(const std::string &prayerNeed, const int64_t chat_id)
 {
-    return removePrayerNeed(QString::fromStdString(prayerNeed), chat_id);
+    return deletePrayerNeed(QString::fromStdString(prayerNeed), chat_id);
 }
 
-bool ManagerDatabase::removeChatId(const int64_t chat_id)
+bool ManagerDatabase::deleteAllPrayerNeeds(const int64_t chat_id)
 {
-
+    const bool retChat = deleteChat(chat_id);
+    const bool retNeed = deletePrayerNeed(chat_id);
+    return retChat && retNeed;
 }
 
 QStringList ManagerDatabase::getListPrayerNeeds(const int64_t chat_id)
@@ -132,7 +133,7 @@ bool ManagerDatabase::createTable_AllChats()
     if (query.exec()){
         return true;
     }
-    qDebug() << "Couldn't create the table 'all_chats': one might already exist." << Qt::endl;
+    qWarning() << "Couldn't create the table 'all_chats': one might already exist." << Qt::endl;
     return false;
 }
 
@@ -148,25 +149,67 @@ bool ManagerDatabase::createTable_PrayerNeeds()
     if (query.exec()){
         return true;
     }
-    qDebug() << "Couldn't create the table 'prayer_needs': one might already exist." << Qt::endl;
+    qWarning() << "Couldn't create the table 'prayer_needs': one might already exist." << Qt::endl;
+    return false;
+}
+
+bool ManagerDatabase::inserNewChat(const int64_t chat_id)
+{
+    QSqlQuery query;
+    query.prepare("INSERT INTO all_chats (chat_id) VALUES (:chat_id)");
+    query.bindValue(":chat_id", varinatChatId(chat_id));
+    if(query.exec()){
+        return true;
+    }
+    qWarning() << "Add prayerNeed failed: " << query.lastError() << Qt::endl;
+    return false;
+}
+
+bool ManagerDatabase::deleteChat(const int64_t chat_id)
+{
+    QSqlQuery query;
+    query.prepare("DELETE FROM all_chats WHERE (chat_id = :chat_id)");
+    query.bindValue(":chat_id", varinatChatId(chat_id));
+    if(query.exec()){
+        return true;
+    }
+    qWarning() << "deleteChat failed: " << query.lastError() << Qt::endl;
+    return false;
+}
+
+bool ManagerDatabase::deletePrayerNeed(const int64_t chat_id)
+{
+    QSqlQuery query;
+    query.prepare("DELETE FROM prayer_needs WHERE (chat_id = :chat_id)");
+    query.bindValue(":chat_id", varinatChatId(chat_id));
+    if(query.exec()){
+        return true;
+    }
+    qWarning() << "deletePrayerNeed failed: " << query.lastError() << Qt::endl;
     return false;
 }
 
 bool ManagerDatabase::existsChatId(const int64_t chat_id) const
 {
-    QSqlQuery checkQuery;
-    checkQuery.prepare("SELECT chat_id FROM all_chats WHERE chat_id = (:chat_id)");
-    checkQuery.bindValue(":chat_id", QVariant::fromValue(chat_id));
-
-    if (checkQuery.exec()){
-        return checkQuery.next();
+    QSqlQuery query;
+    query.prepare("SELECT chat_id FROM all_chats WHERE (chat_id = :chat_id)");
+    query.bindValue(":chat_id", varinatChatId(chat_id));
+    if (query.exec()){
+        return query.next();
     }
-    qDebug() << "Chat_id exists failed: " << checkQuery.lastError() << Qt::endl;
+    qWarning() << "existsChatId failed: " << query.lastError() << Qt::endl;
     return false;
 }
 
 bool ManagerDatabase::existsPrayerNeed(const QString &prayerNeed, const int64_t chat_id) const
 {
-    QSqlQuery query(QString("SELECT * FROM prayer_needs WHERE (need = '%1' AND chat_id = %2);").arg(prayerNeed).arg(chat_id));
+    QSqlQuery query;
+    query.prepare("SELECT * FROM prayer_needs WHERE (need = ':prayerNeed' AND chat_id = :chat_id);");
+    query.bindValue(":prayerNeed", prayerNeed);
+    query.bindValue(":chat_id", varinatChatId(chat_id));
+    if (query.exec()){
+        return query.next();
+    }
+    qWarning() << "existsPrayerNeed failed: " << query.lastError() << Qt::endl;
     return query.next();
 }

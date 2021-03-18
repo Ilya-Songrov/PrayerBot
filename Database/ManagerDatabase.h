@@ -7,6 +7,8 @@
 #include <QSqlRecord>
 #include <QSqlError>
 #include <QFile>
+#include <QFileInfo>
+#include <QVariant>
 
 class ManagerDatabase : public QObject
 {
@@ -20,10 +22,10 @@ public:
     bool addPrayerNeed(const QString &prayerNeed, const std::int64_t chat_id);
     bool addPrayerNeed(const std::string &prayerNeed, const std::int64_t chat_id);
 
-    bool removePrayerNeed(const QString &prayerNeed, const std::int64_t chat_id);
-    bool removePrayerNeed(const std::string &prayerNeed, const std::int64_t chat_id);
+    bool deletePrayerNeed(const QString &prayerNeed, const std::int64_t chat_id);
+    bool deletePrayerNeed(const std::string &prayerNeed, const std::int64_t chat_id);
 
-    bool removeChatId(const std::int64_t chat_id);
+    bool deleteAllPrayerNeeds(const std::int64_t chat_id);
 
     QStringList getListPrayerNeeds(const std::int64_t chat_id);
     void printDatabase() const;
@@ -31,8 +33,13 @@ private:
     void createDatabase();
     bool createTable_AllChats();
     bool createTable_PrayerNeeds();
+    bool inserNewChat(const std::int64_t chat_id);
+    bool deleteChat(const std::int64_t chat_id);
+    bool deletePrayerNeed(const std::int64_t chat_id);
     bool existsChatId(const std::int64_t chat_id) const;
     bool existsPrayerNeed(const QString &prayerNeed, const std::int64_t chat_id) const;
+
+    inline QVariant varinatChatId(const std::int64_t chat_id) const { return QVariant::fromValue(chat_id); }
 
 private:
     QSqlDatabase db;

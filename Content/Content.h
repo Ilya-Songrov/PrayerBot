@@ -25,6 +25,8 @@ public:
     };
     Q_ENUM(Place)
     enum Command{
+        NoCommand,
+
         ThyCloset_AddPrayerNeed,
         ThyCloset_AddAnswerOfGod,
         ThyCloset_ListPrayerNeed,

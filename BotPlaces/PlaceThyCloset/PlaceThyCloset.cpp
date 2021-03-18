@@ -56,13 +56,16 @@ void PlaceThyCloset::onAnyMessage(const Message::Ptr &messagePtr)
 {
     qDebug() << "lastCommand" << lastCommand << Qt::endl;
     if (containsLastCommand(messagePtr, Content::ThyCloset_AddPrayerNeed)) {
-        static const auto answer { QObject::tr("Your prayer need is added").toStdString() };
+//        static const auto answer { QObject::tr("Your prayer need is added.").toStdString() };
         managerDatabase->addPrayerNeed(messagePtr->text, messagePtr->chat->id);
-        sendStartingMessage(messagePtr->chat->id, answer + "\n" + getListPrayerNeeds(messagePtr));
+        sendStartingMessage(messagePtr->chat->id, getListPrayerNeeds(messagePtr));
     }
     else if (containsLastCommand(messagePtr, Content::ThyCloset_AddAnswerOfGod)) {
-        static const auto answer { QObject::tr("Your prayer need has removed").toStdString() };
-        managerDatabase->removePrayerNeed(messagePtr->text, messagePtr->chat->id);
-        sendStartingMessage(messagePtr->chat->id, answer);
+        static const auto answer { QObject::tr("Thank God!").toStdString() };
+//        managerDatabase->deletePrayerNeed(messagePtr->text, messagePtr->chat->id);
+//        sendStartingMessage(messagePtr->chat->id, answer);
+    }
+    else if (QString::fromStdString(messagePtr->text).toLower() == "ping") {
+        sendStartingMessage(messagePtr->chat->id, "Pong!");
     }
 }

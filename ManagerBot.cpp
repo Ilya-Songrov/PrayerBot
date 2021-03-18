@@ -48,7 +48,7 @@ void ManagerBot::setSettings()
 void ManagerBot::anyMessageWasWrite(const Message::Ptr messagePtr)
 {
     const Content::PlaceCommand placeCommand = Content::getPlaceCommand(messagePtr->text);
-    qDebug() << "anyMessageWasWrite:" << messagePtr->text.c_str() << placeCommand.command << Qt::endl;
+    qDebug() << "anyMessageWasWrite:" << messagePtr->text.c_str() << placeCommand.place << placeCommand.command << Qt::endl;
     changePlaceBot(placeCommand.place);
     placeBot->slotOnCommand(messagePtr, placeCommand.command);
 }
@@ -56,7 +56,7 @@ void ManagerBot::anyMessageWasWrite(const Message::Ptr messagePtr)
 void ManagerBot::callbackQueryWasWrite(const CallbackQuery::Ptr callbackQuery)
 {
     const Content::PlaceCommand placeCommand = Content::getPlaceCommand(callbackQuery->data);
-    qDebug() << "callbackQueryWasWrite:" << callbackQuery->data.c_str() << placeCommand.command << Qt::endl;
+    qDebug() << "callbackQueryWasWrite:" << callbackQuery->data.c_str() << placeCommand.place << placeCommand.command << Qt::endl;
     changePlaceBot(placeCommand.place);
     placeBot->slotOnCallbackQuery(callbackQuery, placeCommand.command);
 }

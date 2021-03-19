@@ -28,6 +28,7 @@ public:
     bool deleteAllPrayerNeeds(const std::int64_t chat_id);
 
     QStringList getListPrayerNeeds(const std::int64_t chat_id);
+    QList<QPair<QString, QString> > getListPrayerNeedsWithNeedId(const std::int64_t chat_id);
     void printDatabase() const;
 private:
     void createDatabase();

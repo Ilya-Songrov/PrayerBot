@@ -24,11 +24,13 @@ protected:
     ReplyKeyboardMarkup::Ptr createReplyKeyboardMarkup(const QVector<QStringList> &vecLayouts, const bool resizeKeyboard = true, const bool oneTimeKeyboard = false);
 
     InlineKeyboardMarkup::Ptr createOneColumnInlineKeyboardMarkup(const QStringList &listButtons);
+    InlineKeyboardMarkup::Ptr createOneColumnInlineKeyboardMarkup(const QList<QPair<QString, QString> > &listButtonsNameData);
     InlineKeyboardMarkup::Ptr createInlineKeyboardMarkup(const QVector<QStringList> &vecLayouts);
 
     ReplyKeyboardMarkup::Ptr getStartingButtons();
     void sendStartingButtons(const std::int64_t id);
     void sendStartingMessage(const std::int64_t id, const std::string &message);
+    void sendInlineKeyboardMarkupMessage(const std::int64_t id, const std::string &message, const InlineKeyboardMarkup::Ptr inlineKeyboardMarkup);
 
     inline bool containsLastCommand(const Message::Ptr &messagePtr, const Content::Command command){ return lastCommand.value(messagePtr->chat->id) == command; }
 protected:

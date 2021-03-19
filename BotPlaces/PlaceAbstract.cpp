@@ -93,6 +93,20 @@ InlineKeyboardMarkup::Ptr PlaceAbstract::createOneColumnInlineKeyboardMarkup(con
     return kb;
 }
 
+InlineKeyboardMarkup::Ptr PlaceAbstract::createOneColumnInlineKeyboardMarkup(const QList<QPair<QString, QString> > &listButtonsNameData)
+{
+    InlineKeyboardMarkup::Ptr kb(new InlineKeyboardMarkup);
+    for (const auto &pair : listButtonsNameData) {
+        std::vector<InlineKeyboardButton::Ptr> row;
+        InlineKeyboardButton::Ptr button(new InlineKeyboardButton);
+        button->text = pair.first.toStdString();
+        button->callbackData = pair.second.toStdString();
+        row.push_back(button);
+        kb->inlineKeyboard.push_back(row);
+    }
+    return kb;
+}
+
 InlineKeyboardMarkup::Ptr PlaceAbstract::createInlineKeyboardMarkup(const QVector<QStringList> &vecLayouts)
 {
     InlineKeyboardMarkup::Ptr kb(new InlineKeyboardMarkup);
@@ -111,18 +125,6 @@ InlineKeyboardMarkup::Ptr PlaceAbstract::createInlineKeyboardMarkup(const QVecto
 
 ReplyKeyboardMarkup::Ptr PlaceAbstract::getStartingButtons()
 {
-    //    static const QStringList layout { Content::getCommand(Content::ThyCloset_AddPrayerNeed)
-    //                                    , Content::getCommand(Content::ThyCloset_AddAnswerOfGod)
-    //                                    , Content::getCommand(Content::ThyCloset_ListPrayerNeed) };
-    //    static const auto kb = createOneColumnReplyKeyboardMarkup(layout, true, true);
-    //    return kb;
-    // /////////////////////////////////////////////////////// //
-    //    static const auto kb = createReplyKeyboardMarkup({
-    //                                                         {"🙏 Додати потребу", "❌ Видалити потребу"},
-    //                                                         {"✔️ Додати відповідь від Бога"},
-    //                                                         {"🗒 Поточні потреби", "🗒 Історія потреб"}
-    //                                                     }, true, true);
-    // /////////////////////////////////////////////////////// //
     static const QStringList layout { Content::getCommandStr(Content::ThyCloset_AddPrayerNeed)
                 , Content::getCommandStr(Content::ThyCloset_AddAnswerOfGod)
                 , Content::getCommandStr(Content::ThyCloset_ListPrayerNeed)
@@ -142,4 +144,9 @@ void PlaceAbstract::sendStartingButtons(const int64_t id)
 void PlaceAbstract::sendStartingMessage(const int64_t id, const std::string &message)
 {
     bot->getApi().sendMessage(id, message, false, 0, getStartingButtons());
+}
+
+void PlaceAbstract::sendInlineKeyboardMarkupMessage(const int64_t id, const std::string &message, const InlineKeyboardMarkup::Ptr inlineKeyboardMarkup)
+{
+    bot->getApi().sendMessage(id, message, false, 0, inlineKeyboardMarkup);
 }

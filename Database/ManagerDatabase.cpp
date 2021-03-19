@@ -100,6 +100,25 @@ QStringList ManagerDatabase::getListPrayerNeeds(const int64_t chat_id)
     return list;
 }
 
+QList<QPair<QString, QString> > ManagerDatabase::getListPrayerNeedsWithNeedId(const int64_t chat_id)
+{
+    QList<QPair<QString, QString> > list;
+    QSqlQuery query(QString("SELECT * FROM prayer_needs WHERE chat_id = %1").arg(chat_id));
+    const QSqlRecord record = query.record();
+    const int idNeed = record.indexOf("need");
+    const int idNeedId = record.indexOf("need_id");
+    int step = 0;
+    while (query.next())
+    {
+        const QString need = query.value(idNeed).toString();
+        const int need_id_int = query.value(idNeedId).toInt();
+        const QString need_id = QString::number(need_id_int);
+        const QString lineNeed = QString("%1. %2").arg(++step).arg(need);
+        list.append(qMakePair(lineNeed, need_id));
+    }
+    return list;
+}
+
 void ManagerDatabase::printDatabase() const
 {
     qDebug() << "printDatabase:" << Qt::endl;
@@ -133,7 +152,7 @@ bool ManagerDatabase::createTable_AllChats()
     if (query.exec()){
         return true;
     }
-    qWarning() << "Couldn't create the table 'all_chats': one might already exist." << Qt::endl;
+    qWarning() << "Couldn't create the table 'all_chats':" << query.lastError() << Qt::endl;
     return false;
 }
 
@@ -141,6 +160,7 @@ bool ManagerDatabase::createTable_PrayerNeeds()
 {
     QSqlQuery query;
     query.prepare("CREATE TABLE prayer_needs ("
+            "need_id INT NOT NULL IDENTITY(1,1) PRIMARY KEY,"
             "need TEXT NOT NULL,"
             "chat_id INTEGER NOT NULL,"
             "FOREIGN KEY (chat_id) REFERENCES all_chats(chat_id) ON DELETE CASCADE"
@@ -149,7 +169,7 @@ bool ManagerDatabase::createTable_PrayerNeeds()
     if (query.exec()){
         return true;
     }
-    qWarning() << "Couldn't create the table 'prayer_needs': one might already exist." << Qt::endl;
+    qWarning() << "Couldn't create the table 'prayer_needs':" << query.lastError() << Qt::endl;
     return false;
 }
 

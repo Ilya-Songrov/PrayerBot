@@ -37,8 +37,15 @@ void PlaceThyCloset::onAddPrayerNeed(const Message::Ptr &messagePtr)
 
 void PlaceThyCloset::onAddAnswerOfGod(const Message::Ptr &messagePtr)
 {
-    static const auto answer { QObject::tr("Write number of prayer need:").toStdString() };
-    bot->getApi().sendMessage(messagePtr->chat->id, answer);
+    static const auto answer { QObject::tr("Select the prayer need:").toStdString() };
+    const auto listNeedsWithNeedId = managerDatabase->getListPrayerNeedsWithNeedId(messagePtr->chat->id);
+    QList<QPair<QString, QString> > listButtons;
+    for (const auto &pair: listNeedsWithNeedId) {
+        listButtons.append(qMakePair(pair.first.left(5), pair.second));
+        qDebug() << "first:" << pair.first << "second:" << pair.second << Qt::endl;
+    }
+//    const auto inlineButtonPrayerNeed = createOneColumnInlineKeyboardMarkup(listButtons);
+//    sendInlineKeyboardMarkupMessage(messagePtr->chat->id, answer, inlineButtonPrayerNeed);
 }
 
 void PlaceThyCloset::onListPrayerNeed(const Message::Ptr &messagePtr)

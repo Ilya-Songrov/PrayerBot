@@ -79,7 +79,7 @@ void ManagerBot::changePlaceBot(const Content::Place place)
 
 QString ManagerBot::getTokenFromFile()
 {
-    const QJsonDocument doc = FileWorker::readFileJson("../conf.json");
+    const QJsonDocument doc = FileWorker::readFileJson("../config.json");
     const QJsonObject obj = doc.object();
     return obj.value("token").toString();
 }

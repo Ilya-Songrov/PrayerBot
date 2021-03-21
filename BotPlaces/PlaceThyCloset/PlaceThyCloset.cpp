@@ -67,7 +67,6 @@ void PlaceThyCloset::onAnyMessage(const Message::Ptr &message)
         sendStartingMessage(chat_id, getListPrayerNeeds(message));
     }
     else if (chatContainsLastCommand(chat_id, Content::ThyCloset_WriteAnswerOfGod)) {
-        qDebug() << "onAnyMessage onAnyMessage " << Qt::endl;
         const auto lastNeedId = mapAllChats->value(chat_id).lastNeedId;
         if (lastNeedId != -1) {
             managerDatabase->addAnswerOfGod(message->text, lastNeedId);
@@ -99,7 +98,7 @@ void PlaceThyCloset::onAnyCallbackQuery(const CallbackQuery::Ptr &callbackQuery)
 
 std::string PlaceThyCloset::getListPrayerNeeds(const Message::Ptr &message)
 {
-    const QString answer { "List prayers:\n" + managerDatabase->getListPrayerNeeds(message->chat->id).join('\n') };
+    const QString answer { QObject::tr("List prayers:") + "\n" + managerDatabase->getListPrayerNeeds(message->chat->id).join('\n') };
     return answer.toStdString();
 }
 

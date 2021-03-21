@@ -2,8 +2,10 @@
 
 
 ManagerBot::ManagerBot(const QString token, QObject *parent) : QObject(parent)
+  , appTranslator(":/translationFiles/appTranslator_ru_UA.qm")
   , mapAllChats(new QMap<std::uint64_t, ChatInfo>())
 {
+    Content::initContent();
     initGlobalData(token.isEmpty() ? getTokenFromFile() : token);
     PlaceAbstract::initMapAllChats(mapAllChats);
 

@@ -9,6 +9,7 @@ CONFIG -= app_bundle
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    Adjutants/AppTranslator.cpp \
     Adjutants/FileWorker.cpp \
     Anomalies/Errors.cpp \
     Anomalies/ExceptionHandler.cpp \
@@ -23,6 +24,7 @@ SOURCES += \
     main.cpp \
 
 HEADERS += \
+    Adjutants/AppTranslator.h \
     Adjutants/FileWorker.h \
     Anomalies/ApplicationNotify.h \
     Anomalies/Errors.h \
@@ -62,3 +64,9 @@ unix:!macx: LIBS += -lpthread
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+RESOURCES += \
+    Resources/translationFiles/translationFiles.qrc
+
+TRANSLATIONS += \
+    Resources/translationFiles/appTranslator_ru_UA.ts \

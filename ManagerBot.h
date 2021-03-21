@@ -5,6 +5,7 @@
 #include <QVariant>
 
 #include "FileWorker.h"
+#include "Adjutants/AppTranslator.h"
 #include "GlobalData/GlobalData.h"
 #include "Content/Content.h"
 #include "Content/ChatInfo.h"
@@ -35,6 +36,7 @@ private:
     void printChatInfo(const QString &header, const ChatInfo &chatInfo, const std::string &messageText);
 
 private:
+    AppTranslator appTranslator;
     PlaceThyCloset      *placeThyCloset ;
     PlaceAdditional     *placeAdditional;
     PlaceAbstract       *placeBot       ;

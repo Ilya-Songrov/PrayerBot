@@ -1,34 +1,40 @@
 #include "PlaceAbstract.h"
 
+std::shared_ptr<QMap<std::uint64_t, ChatInfo> > PlaceAbstract::mapAllChats;
+
 PlaceAbstract::PlaceAbstract(QObject *parent) : QObject(parent)
 {
 
 }
 
-void PlaceAbstract::slotOnCommand(const Message::Ptr &messagePtr, const Content::Command &command)
+void PlaceAbstract::initMapAllChats(std::shared_ptr<QMap<uint64_t, ChatInfo> > mapAllChatsPtr)
 {
-    switch (command) {
+    mapAllChats = mapAllChatsPtr;
+}
+
+void PlaceAbstract::slotOnCommand(const Message::Ptr &message, const ChatInfo &chatInfo)
+{
+    switch (chatInfo.currentCommand) {
     case Content::MultiPlace_Start:
-        sendStartingButtons(messagePtr->chat->id);
+        sendStartingButtons(message->chat->id);
         break;
     case Content::MultiPlace_Help:
-        sendStartingButtons(messagePtr->chat->id);
+        sendStartingButtons(message->chat->id);
         break;
     case Content::MultiPlace_AnyMessage:
-        if (QString::fromStdString(messagePtr->text).toLower() == "ping") {
-            sendStartingMessage(messagePtr->chat->id, "Pong!");
+        if (QString::fromStdString(message->text).toLower() == "ping") {
+            sendStartingMessage(message->chat->id, "Pong!");
         }
         break;
     default:
         static const auto answer { QObject::tr("Query is not correct").toStdString() };
-        sendStartingMessage(messagePtr->chat->id, answer);
+        sendStartingMessage(message->chat->id, answer);
     }
-    lastCommand.insert(messagePtr->chat->id, command);
 }
 
-void PlaceAbstract::slotOnCallbackQuery(const CallbackQuery::Ptr &callbackQuery, const Content::Command &command)
+void PlaceAbstract::slotOnCallbackQuery(const CallbackQuery::Ptr &callbackQuery, const ChatInfo &chatInfo)
 {
-    switch (command) {
+    switch (chatInfo.currentCommand) {
     case Content::MultiPlace_Start:
         sendStartingButtons(callbackQuery->message->chat->id);
         break;
@@ -44,7 +50,6 @@ void PlaceAbstract::slotOnCallbackQuery(const CallbackQuery::Ptr &callbackQuery,
         static const auto answer { QObject::tr("Query is not correct").toStdString() };
         sendStartingMessage(callbackQuery->message->chat->id, answer);
     }
-    lastCommand.insert(callbackQuery->message->chat->id, command);
 }
 
 ReplyKeyboardMarkup::Ptr PlaceAbstract::createOneColumnReplyKeyboardMarkup(const QStringList &listButtons, const bool resizeKeyboard, const bool oneTimeKeyboard)
@@ -134,19 +139,19 @@ ReplyKeyboardMarkup::Ptr PlaceAbstract::getStartingButtons()
     return kb;
 }
 
-void PlaceAbstract::sendStartingButtons(const int64_t id)
+void PlaceAbstract::sendStartingButtons(const int64_t chat_id)
 {
     static const QString answer { QObject::tr("Hello child of God. This bot is designed to make your prayer life effective. \n\nMay God bless you.") };
     static const auto answerStdStr { answer.toStdString() };
-    bot->getApi().sendMessage(id, answerStdStr, false, 0, getStartingButtons());
+    bot->getApi().sendMessage(chat_id, answerStdStr, false, 0, getStartingButtons());
 }
 
-void PlaceAbstract::sendStartingMessage(const int64_t id, const std::string &message)
+void PlaceAbstract::sendStartingMessage(const int64_t chat_id, const std::string &message)
 {
-    bot->getApi().sendMessage(id, message, false, 0, getStartingButtons());
+    bot->getApi().sendMessage(chat_id, message, false, 0, getStartingButtons());
 }
 
-void PlaceAbstract::sendInlineKeyboardMarkupMessage(const int64_t id, const std::string &message, const InlineKeyboardMarkup::Ptr inlineKeyboardMarkup)
+void PlaceAbstract::sendInlineKeyboardMarkupMessage(const int64_t chat_id, const std::string &message, const InlineKeyboardMarkup::Ptr inlineKeyboardMarkup)
 {
-    bot->getApi().sendMessage(id, message, false, 0, inlineKeyboardMarkup);
+    bot->getApi().sendMessage(chat_id, message, false, 0, inlineKeyboardMarkup);
 }

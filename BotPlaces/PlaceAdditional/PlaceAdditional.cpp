@@ -5,24 +5,23 @@ PlaceAdditional::PlaceAdditional(QObject *parent) : PlaceAbstract(parent)
 
 }
 
-void PlaceAdditional::slotOnCommand(const Message::Ptr &messagePtr, const Content::Command &command)
+void PlaceAdditional::slotOnCommand(const Message::Ptr &message, const ChatInfo &chatInfo)
 {
-    switch (command) {
+    switch (chatInfo.currentCommand) {
     case Content::Additional_Additional:
-        onAdditional(messagePtr);
+        onAdditional(message);
         break;
     case Content::MultiPlace_AnyMessage:
-        onAdditional(messagePtr);
+        onAdditional(message);
         break;
     default:
-        PlaceAbstract::slotOnCommand(messagePtr, command);
+        PlaceAbstract::slotOnCommand(message, chatInfo);
     }
-    lastCommand.insert(messagePtr->chat->id, command);
 }
 
-void PlaceAdditional::slotOnCallbackQuery(const CallbackQuery::Ptr &callbackQuery, const Content::Command &command)
+void PlaceAdditional::slotOnCallbackQuery(const CallbackQuery::Ptr &callbackQuery, const ChatInfo &chatInfo)
 {
-    switch (command) {
+    switch (chatInfo.currentCommand) {
     case Content::Additional_ShowHistory:
         onShowHistory(callbackQuery);
         break;
@@ -35,58 +34,63 @@ void PlaceAdditional::slotOnCallbackQuery(const CallbackQuery::Ptr &callbackQuer
     case Content::Additional_Developer:
         onDeveloper(callbackQuery);
         break;
+    case Content::MultiPlace_AnyCallbackQuery:
+        onAnyCallbackQuery(callbackQuery);
+        break;
     default:
-        PlaceAbstract::slotOnCallbackQuery(callbackQuery, command);
+        PlaceAbstract::slotOnCallbackQuery(callbackQuery, chatInfo);
     }
-    lastCommand.insert(callbackQuery->message->chat->id, command);
 }
 
-void PlaceAdditional::onAdditional(const Message::Ptr &messagePtr)
+void PlaceAdditional::onAdditional(const Message::Ptr &message)
 {
     static const auto keyboard = createOneColumnInlineKeyboardMarkup({Content::getCommandStr(Content::Additional_ShowHistory)
                                                                       , Content::getCommandStr(Content::Additional_DeletePrayerNeed)
                                                                       , Content::getCommandStr(Content::Additional_DeleteHistory)
                                                                       , Content::getCommandStr(Content::Additional_Developer)
                                                                      });
-    static const auto answer { QObject::tr("Your history:").toStdString() };
-    bot->getApi().sendMessage(messagePtr->chat->id, answer, false, 0, keyboard, "Markdown");
+    static const auto answer { QObject::tr("Select function:").toStdString() };
+    bot->getApi().sendMessage(message->chat->id, answer, false, 0, keyboard, "Markdown");
 }
 
-void PlaceAdditional::onAnyMessage(const Message::Ptr &messagePtr)
+void PlaceAdditional::onAnyMessage(const Message::Ptr &message)
 {
-    qDebug() << "lastCommand" << lastCommand << Qt::endl;
-    if (containsLastCommand(messagePtr, Content::Additional_DeletePrayerNeed)) {
-        deletePrayerNeed(messagePtr);
-    }
-    else if (containsLastCommand(messagePtr, Content::Additional_DeleteHistory)) {
-        static const auto answer { QObject::tr("Your prayer need has deleted").toStdString() };
-        managerDatabase->deletePrayerNeed(messagePtr->text, messagePtr->chat->id);
-        sendStartingMessage(messagePtr->chat->id, answer);
-    }
-    else if (QString::fromStdString(messagePtr->text).toLower() == "ping") {
-        sendStartingMessage(messagePtr->chat->id, "Pong!");
+    if (QString::fromStdString(message->text).toLower() == "ping") {
+        sendStartingMessage(message->chat->id, "Pong!");
     }
 }
 
 void PlaceAdditional::onShowHistory(const CallbackQuery::Ptr &callbackQuery)
 {
-    const auto answer { QObject::tr("\n\nShow your history").toStdString() };
-    //    bot->getApi().editMessageReplyMarkup(callbackQuery->message->chat->id, callbackQuery->message->messageId, "sdf", getStartingButtons());
-    //    sendStartingMessage(callbackQuery->message->chat->id, managerDatabase->getListPrayerNeeds(callbackQuery->message->chat->id).join("\n").toStdString());
+    static const auto answer { QObject::tr("\n\nShow your history:\n").toStdString() };
+    const auto vecNeeds = managerDatabase->getVecPrayerNeeds(callbackQuery->message->chat->id, ManagerDatabase::PrayerNeedsAll);
+    QString needs;
+    for (const auto &prayerNeed: vecNeeds) {
+        needs += QString("%1 (%2)\n").arg(prayerNeed.need, prayerNeed.answer);
+    }
     bot->getApi().answerCallbackQuery(callbackQuery->id);
+    sendStartingMessage(callbackQuery->message->chat->id, answer + needs.toStdString());
 }
 
 void PlaceAdditional::onDeletePrayerNeed(const CallbackQuery::Ptr &callbackQuery)
 {
-    static const auto enterNumber { QObject::tr("Enter number of prayer need:").toStdString() };
-    const QString answer { "List prayers:\n" + managerDatabase->getListPrayerNeeds(callbackQuery->message->chat->id).join('\n') };
+    static const auto answer { QObject::tr("Select the prayer need:").toStdString() };
+    const auto vecNeeds = managerDatabase->getVecPrayerNeeds(callbackQuery->message->chat->id);
+    QList<QPair<QString, QString> > listButtons;
+    for (const auto &prayerNeed: vecNeeds) {
+        listButtons.append(qMakePair(prayerNeed.need.left(15) + " ...", prayerNeed.need_id));
+    }
+    const auto inlineButtonPrayerNeed = createOneColumnInlineKeyboardMarkup(listButtons);
     bot->getApi().answerCallbackQuery(callbackQuery->id);
-    bot->getApi().sendMessage(callbackQuery->message->chat->id, answer.toStdString() + "\n" + enterNumber);
+    sendInlineKeyboardMarkupMessage(callbackQuery->message->chat->id, answer, inlineButtonPrayerNeed);
 }
 
 void PlaceAdditional::onDeleteHistory(const CallbackQuery::Ptr &callbackQuery)
 {
-
+    static const auto answer { QObject::tr("Your all prayer needs has deleted").toStdString() };
+    managerDatabase->deleteAllPrayerNeeds(callbackQuery->message->chat->id);
+    bot->getApi().answerCallbackQuery(callbackQuery->id);
+    sendStartingMessage(callbackQuery->message->chat->id, answer);
 }
 
 void PlaceAdditional::onDeveloper(const CallbackQuery::Ptr &callbackQuery)
@@ -95,18 +99,23 @@ void PlaceAdditional::onDeveloper(const CallbackQuery::Ptr &callbackQuery)
     sendStartingMessage(callbackQuery->message->chat->id, answer);
 }
 
-void PlaceAdditional::deletePrayerNeed(const Message::Ptr &messagePtr)
+void PlaceAdditional::onAnyCallbackQuery(const CallbackQuery::Ptr &callbackQuery)
 {
-    const auto list = managerDatabase->getListPrayerNeeds(messagePtr->chat->id);
-    const QString input = QString::fromStdString(messagePtr->text).trimmed();
-    int step = 0;
-    for (const QString &need: list) {
-        ++step;
-        if (need.left(input.size()) == input) {
-            const QString number = QString::number(step);
-            const QString deletedNeed = need.right(need.size() - number.size());
-            managerDatabase->deletePrayerNeed(deletedNeed, messagePtr->chat->id);
-            return;
+    const auto chat_id = callbackQuery->message->chat->id;
+    if (chatContainsLastCommand(chat_id, Content::Additional_DeletePrayerNeed)) {
+        static const auto answer { QObject::tr("Prayer need has been successfully removed!").toStdString() };
+        bool ok;
+        const int need_id = QString::fromStdString(callbackQuery->data).toInt(&ok);
+        if (ok) {
+            managerDatabase->deletePrayerNeed(need_id, chat_id);
         }
+        bot->getApi().answerCallbackQuery(callbackQuery->id);
+        sendStartingMessage(chat_id, answer);
     }
+}
+
+std::string PlaceAdditional::getListPrayerNeeds(const Message::Ptr &message)
+{
+    const QString answer { "List prayers:\n" + managerDatabase->getListPrayerNeeds(message->chat->id, ManagerDatabase::PrayerNeedsWithAnswerOfGod).join('\n') };
+    return answer.toStdString();
 }

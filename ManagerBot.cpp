@@ -2,8 +2,10 @@
 
 
 ManagerBot::ManagerBot(const QString token, QObject *parent) : QObject(parent)
+  , mapAllChats(new QMap<std::uint64_t, ChatInfo>())
 {
     initGlobalData(token.isEmpty() ? getTokenFromFile() : token);
+    PlaceAbstract::initMapAllChats(mapAllChats);
 
     placeThyCloset      = new PlaceThyCloset    (this);
     placeAdditional     = new PlaceAdditional   (this);
@@ -45,23 +47,36 @@ void ManagerBot::setSettings()
 //    bot->getEvents().onCallbackQuery([](const CallbackQuery::Ptr &callbackQuery){ qDebug() << "onCallbackQuery" << callbackQuery->data.c_str() << Qt::endl; });
 }
 
-void ManagerBot::anyMessageWasWrite(const Message::Ptr messagePtr)
+void ManagerBot::anyMessageWasWrite(const Message::Ptr message)
 {
-    const Content::PlaceCommand placeCommand = Content::getPlaceCommand(messagePtr->text);
-    qDebug() << "anyMessageWasWrite:" << messagePtr->text.c_str() << placeCommand.place << placeCommand.command << Qt::endl;
-    changePlaceBot(placeCommand.place);
-    placeBot->slotOnCommand(messagePtr, placeCommand.command);
+    const auto chatInfo = getChatInfo(message->chat->id, message->text);
+    printChatInfo(QString(__FUNCTION__), chatInfo, message->text);
+    mapAllChats->insert(message->chat->id, chatInfo);
+    changeObjPtrPlaceBot(chatInfo.currentPlace);
+    placeBot->slotOnCommand(message, chatInfo);
 }
 
 void ManagerBot::callbackQueryWasWrite(const CallbackQuery::Ptr callbackQuery)
 {
-    const Content::PlaceCommand placeCommand = Content::getPlaceCommand(callbackQuery->data);
-    qDebug() << "callbackQueryWasWrite:" << callbackQuery->data.c_str() << placeCommand.place << placeCommand.command << Qt::endl;
-    changePlaceBot(placeCommand.place);
-    placeBot->slotOnCallbackQuery(callbackQuery, placeCommand.command);
+    const auto chatInfo = getChatInfo(callbackQuery->message->chat->id, callbackQuery->data);
+    printChatInfo(QString(__FUNCTION__), chatInfo, callbackQuery->message->text);
+    mapAllChats->insert(callbackQuery->message->chat->id, chatInfo);
+    changeObjPtrPlaceBot(chatInfo.currentPlace);
+    placeBot->slotOnCallbackQuery(callbackQuery, chatInfo);
 }
 
-void ManagerBot::changePlaceBot(const Content::Place place)
+ChatInfo ManagerBot::getChatInfo(const int64_t chat_id, const std::string &currentText)
+{
+    const Content::PlaceCommand currentPlaceCommand = Content::getPlaceCommand(currentText);
+    ChatInfo chatInfo = mapAllChats->value(chat_id);
+    chatInfo.lastPlace      = chatInfo.currentPlace;
+    chatInfo.lastCommand    = chatInfo.currentCommand;
+    chatInfo.currentPlace   = currentPlaceCommand.place;
+    chatInfo.currentCommand = currentPlaceCommand.command;
+    return chatInfo;
+}
+
+void ManagerBot::changeObjPtrPlaceBot(const Content::Place place)
 {
     switch (place) {
     case Content::Place::ThyCloset:
@@ -82,4 +97,21 @@ QString ManagerBot::getTokenFromFile()
     const QJsonDocument doc = FileWorker::readFileJson("../config.json");
     const QJsonObject obj = doc.object();
     return obj.value("token").toString();
+}
+
+void ManagerBot::printChatInfo(const QString &header, const ChatInfo &chatInfo, const std::string &messageText)
+{
+    static const QChar placeholder { '-' };
+    static const int lenghtSymbols = 48;
+    static const int justified = lenghtSymbols / 2 + header.size() / 2;
+    const QString frameHeader = QString(header).leftJustified(justified, '-').rightJustified(lenghtSymbols, placeholder);
+
+    qDebug() << frameHeader << Qt::endl;
+    qDebug() << "lastPlace      :" << chatInfo.lastPlace        ;
+    qDebug() << "lastCommand    :" << chatInfo.lastCommand      ;
+    qDebug() << "currentPlace   :" << chatInfo.currentPlace     ;
+    qDebug() << "currentCommand :" << chatInfo.currentCommand   ;
+    qDebug() << "lastNeedId     :" << chatInfo.lastNeedId       ;
+    qDebug() << "messageText    :" << messageText.c_str()       ;
+    qDebug() << Qt::endl << frameHeader << Qt::endl;
 }

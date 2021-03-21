@@ -5,6 +5,7 @@
 #include <QtSql>
 
 #include "../Content/Content.h"
+#include "../Content/ChatInfo.h"
 #include "../GlobalData/GlobalData.h"
 
 #include <tgbot/tgbot.h>
@@ -16,8 +17,10 @@ class PlaceAbstract : public QObject
 public:
     explicit PlaceAbstract(QObject *parent = nullptr);
 
-    virtual void slotOnCommand(const Message::Ptr &messagePtr, const Content::Command &command);
-    virtual void slotOnCallbackQuery(const CallbackQuery::Ptr &callbackQuery, const Content::Command &command);
+    static void initMapAllChats(std::shared_ptr<QMap<std::uint64_t, ChatInfo> > mapAllChatsPtr);
+
+    virtual void slotOnCommand(const Message::Ptr &message, const ChatInfo &chatInfo);
+    virtual void slotOnCallbackQuery(const CallbackQuery::Ptr &callbackQuery, const ChatInfo &chatInfo);
 
 protected:
     ReplyKeyboardMarkup::Ptr createOneColumnReplyKeyboardMarkup(const QStringList &listButtons, const bool resizeKeyboard = true, const bool oneTimeKeyboard = false);
@@ -28,12 +31,13 @@ protected:
     InlineKeyboardMarkup::Ptr createInlineKeyboardMarkup(const QVector<QStringList> &vecLayouts);
 
     ReplyKeyboardMarkup::Ptr getStartingButtons();
-    void sendStartingButtons(const std::int64_t id);
-    void sendStartingMessage(const std::int64_t id, const std::string &message);
-    void sendInlineKeyboardMarkupMessage(const std::int64_t id, const std::string &message, const InlineKeyboardMarkup::Ptr inlineKeyboardMarkup);
+    void sendStartingButtons(const std::int64_t chat_id);
+    void sendStartingMessage(const std::int64_t chat_id, const std::string &message);
+    void sendInlineKeyboardMarkupMessage(const std::int64_t chat_id, const std::string &message, const InlineKeyboardMarkup::Ptr inlineKeyboardMarkup);
 
-    inline bool containsLastCommand(const Message::Ptr &messagePtr, const Content::Command command){ return lastCommand.value(messagePtr->chat->id) == command; }
+    inline bool chatContainsLastCommand(const std::int64_t chat_id, const Content::Command command){ return mapAllChats->value(chat_id).lastCommand == command; }
+
 protected:
-    QMap<std::uint64_t, Content::Command> lastCommand;
+    static std::shared_ptr<QMap<std::uint64_t, ChatInfo> > mapAllChats;
 };
 

@@ -15,6 +15,7 @@ SOURCES += \
     BotPlaces/PlaceAbstract.cpp \
     BotPlaces/PlaceAdditional/PlaceAdditional.cpp \
     BotPlaces/PlaceThyCloset/PlaceThyCloset.cpp \
+    Content/ChatInfo.cpp \
     Content/Content.cpp \
     Database/ManagerDatabase.cpp \
     GlobalData/GlobalData.cpp \
@@ -29,6 +30,7 @@ HEADERS += \
     BotPlaces/PlaceAbstract.h \
     BotPlaces/PlaceAdditional/PlaceAdditional.h \
     BotPlaces/PlaceThyCloset/PlaceThyCloset.h \
+    Content/ChatInfo.h \
     Content/Content.h \
     Database/ManagerDatabase.h \
     GlobalData/GlobalData.h \

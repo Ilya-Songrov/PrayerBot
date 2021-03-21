@@ -29,6 +29,7 @@ public:
 
         ThyCloset_AddPrayerNeed,
         ThyCloset_AddAnswerOfGod,
+        ThyCloset_WriteAnswerOfGod,
         ThyCloset_ListPrayerNeed,
 
         Additional_Additional,
@@ -40,6 +41,7 @@ public:
         MultiPlace_Start,
         MultiPlace_Help,
         MultiPlace_AnyMessage,
+        MultiPlace_AnyCallbackQuery = MultiPlace_AnyMessage,
     };
     Q_ENUM(Command)
     struct PlaceCommand{
@@ -52,7 +54,7 @@ public:
     static void initContent();
     static PlaceCommand getPlaceCommand(const QString &command);
     static PlaceCommand getPlaceCommand(const std::string &command);
-    static QString getCommandStr(const Command placeCommand);
+    static QString getCommandStr(const Command command);
 
 private:
     static QVector<QPair<PlaceCommand, QString> > vecPlaceCommand;

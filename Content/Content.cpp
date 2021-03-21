@@ -16,7 +16,7 @@ QVector<QPair<Content::PlaceCommand, QString> > Content::vecPlaceCommand{
     {   Content::PlaceCommand(Content::Place::Additional, Content::Additional_DeleteHistory), QObject::tr("Delete history 📍") },
     {   Content::PlaceCommand(Content::Place::Additional, Content::Additional_Developer), QObject::tr("Developer 📍") },
 
-    {   Content::PlaceCommand(Content::Place::MultiPlace, Content::MultiPlace_Help), "/start" },
+    {   Content::PlaceCommand(Content::Place::MultiPlace, Content::MultiPlace_Start), "/start" },
     {   Content::PlaceCommand(Content::Place::MultiPlace, Content::MultiPlace_Help), "/help" },
 };
 
@@ -45,10 +45,12 @@ Content::PlaceCommand Content::getPlaceCommand(const std::string &command)
     return getPlaceCommand(QString::fromStdString(command));
 }
 
-QString Content::getCommandStr(const Content::Command placeCommand)
+QString Content::getCommandStr(const Content::Command command)
 {
-    if (placeCommand < vecPlaceCommand.size()) {
-        return vecPlaceCommand.at(placeCommand).second;
+    for (const auto &pair: qAsConst(vecPlaceCommand)) {
+        if (pair.first.command == command) {
+            return pair.second;
+        }
     }
     return {};
 }
